@@ -8,6 +8,21 @@ import { Type, type Static } from '@sinclair/typebox';
 import { Check } from '@sinclair/typebox/value';
 import * as OTPAuth from 'otpauth';
 import { LegacyUserRaw, parseProfile, type Profile } from './profile';
+import readline from 'readline';
+
+async function promptCode(promptText = '请输入验证码: '): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) =>
+    rl.question(promptText, (code) => {
+      rl.close();
+      resolve(code.trim());
+    })
+  );
+}
 
 interface TwitterUserAuthFlowInitRequest {
   flow_name: string;
@@ -316,13 +331,14 @@ export class TwitterUserAuth extends TwitterGuestAuth {
     prev: FlowTokenResultSuccess,
     email: string | undefined,
   ) {
+    let code = await promptCode()
     return await this.executeFlowTask({
       flow_token: prev.flowToken,
       subtask_inputs: [
         {
           subtask_id: 'LoginAcid',
           enter_text: {
-            text: email,
+            text: code,
             link: 'next_link',
           },
         },
